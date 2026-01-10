@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from .models import Order, OrderStatusHistory
 from products.models import Product
+from .middleware import get_current_request
 
 
 @receiver(pre_save, sender=Order)
