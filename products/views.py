@@ -1,3 +1,4 @@
+from os import name
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -15,6 +16,10 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
         category_id = self.request.query_params.get("category")
         active = self.request.query_params.get("active")
         in_stock = self.request.query_params.get("in_stock")
+        q = self.request.query_params.get("q")
+
+        if q:
+            qs = qs.filter(name__icontains=q)
 
         if category_id:
             qs = qs.filter(category_id=category_id)
@@ -22,9 +27,9 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
         if active is not None:
             qs = qs.filter(active=active)
 
-        if in_stock == "true":
+        if in_stock.lower() == "true":
             qs = qs.filter(stock_quantity__gt=0)
-        elif in_stock == "false":
+        elif in_stock.lower() == "false":
             qs = qs.filter(stock_quantity=0)
 
         return qs.select_related("category")
