@@ -71,6 +71,15 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
+### Seeding Test Data
+
+This project includes a management command to seed the database with sample data (categories, products, and orders).
+
+Run the following command after migrations:
+
+```bash
+python manage.py seed_test_data
+
 ### 5. Run Development Server
 
 ``` bash
