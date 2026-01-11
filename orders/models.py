@@ -25,13 +25,16 @@ class Order(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_code = models.CharField(max_length=20, unique=True, editable=False)
 
-    product = models.ForeignKey(Product, on_delete=models.PROTECT, related_name="orders")
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, related_name="orders", db_index=True
+    )
 
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
 
-    status = models.IntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING)
+    status = models.IntegerField(
+        choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
 
     status_changed_at = models.DateTimeField(null=True)
 
@@ -60,10 +63,12 @@ class Order(models.Model):
 class OrderStatusHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="status_history")
+    order = models.ForeignKey(
+        Order, on_delete=models.CASCADE, related_name="status_history", db_index=True
+    )
 
     old_status = models.IntegerField(null=True)
-    new_status = models.IntegerField()
+    new_status = models.IntegerField(db_index=True)
     changed_by = models.CharField(max_length=100, null=True)
     change_source = models.CharField(max_length=20)  # api, admin, system
     ip_address = models.GenericIPAddressField(null=True)

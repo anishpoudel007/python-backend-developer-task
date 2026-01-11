@@ -7,12 +7,13 @@ from categories.models import Category
 
 class Product(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField()
 
     category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, related_name="products")
+        Category, on_delete=models.PROTECT, related_name="products", db_index=True
+    )
 
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -21,8 +22,8 @@ class Product(models.Model):
     )
 
     stock_quantity = models.IntegerField(default=0)
-    active = models.IntegerField(default=1)
-    delete_status = models.IntegerField(default=0)
+    active = models.IntegerField(default=1, db_index=True)
+    delete_status = models.IntegerField(default=0, db_index=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -30,6 +31,9 @@ class Product(models.Model):
     class Meta:
         db_table = "products"
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["category", "active", "delete_status"]),
+        ]
 
     def __str__(self):
         return self.name
