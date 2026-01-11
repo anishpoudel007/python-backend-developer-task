@@ -45,6 +45,13 @@ git clone <repository-url>
 cd interview_task
 ```
 
+### Environment Variables
+
+Copy the example environment file and update values as needed:
+
+```bash
+cp env.example .env
+
 ### 2. Install Dependencies
 
 ``` bash
