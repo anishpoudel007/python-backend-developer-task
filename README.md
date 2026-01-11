@@ -52,7 +52,6 @@ Copy the example environment file and update values as needed:
 ```bash
 cp env.example .env
 ```
-```
 
 ### Install Dependencies
 
