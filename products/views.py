@@ -1,3 +1,4 @@
+from project.custom_pagination import StandardResultsSetPagination
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -13,6 +14,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
     queryset = Product.objects.filter(delete_status=0)  # class attribute
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
+    pagination_class = StandardResultsSetPagination
 
     def get_permissions(self):
         """

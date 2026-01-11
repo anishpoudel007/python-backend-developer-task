@@ -2,12 +2,30 @@ import pytest
 from rest_framework.test import APIClient
 from categories.models import Category
 from products.models import Product
+from rest_framework_simplejwt.tokens import RefreshToken
 from orders.models import Order
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+@pytest.fixture
+def test_user(db):
+    user = User.objects.create_user(username="testuser", password="password123")
+    return user
 
 
 @pytest.fixture
 def api_client():
     return APIClient()
+
+
+@pytest.fixture
+def api_client_with_auth(test_user):
+    client = APIClient()
+    refresh = RefreshToken.for_user(test_user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+    return client
 
 
 @pytest.mark.django_db
@@ -21,7 +39,7 @@ def test_list_categories_with_subcategories(api_client):
 
 
 @pytest.mark.django_db
-def test_create_product_with_category(api_client):
+def test_create_product_with_category(api_client_with_auth):
     cat = Category.objects.create(name="Electronics")
     payload = {
         "name": "iPhone",
@@ -32,7 +50,7 @@ def test_create_product_with_category(api_client):
         "discount_percent": 10,
         "stock_quantity": 5,
     }
-    res = api_client.post("/api/products/", payload, format="json")
+    res = api_client_with_auth.post("/api/products/", payload, format="json")
     assert res.status_code == 201
     assert res.json()["category"]["id"] == str(cat.id)
 
@@ -52,7 +70,7 @@ def test_filter_products_by_price_and_stock(api_client):
 
 
 @pytest.mark.django_db
-def test_update_order_status_creates_history(api_client):
+def test_update_order_status_creates_history(api_client_with_auth):
     cat = Category.objects.create(name="Electronics")
     prod = Product.objects.create(
         name="iPhone",
@@ -62,8 +80,8 @@ def test_update_order_status_creates_history(api_client):
         base_price=1000,
         stock_quantity=10,
     )
-    order = Order.objects.create(product=prod, quantity=1, unit_price=prod.final_price)
-    res = api_client.patch(f"/api/orders/{order.id}/", {"status": 10}, format="json")
+    order = Order.objects.create(product_id=prod.id, quantity=1, unit_price=prod.final_price)
+    res = api_client_with_auth.patch(f"/api/orders/{order.id}/", {"status": 10}, format="json")
     assert res.status_code == 200
     order.refresh_from_db()
     assert order.status == 10

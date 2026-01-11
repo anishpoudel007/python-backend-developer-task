@@ -1,3 +1,4 @@
+from project.custom_pagination import StandardResultsSetPagination
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
@@ -8,6 +9,7 @@ from rest_framework import generics, permissions, status
 
 class CategoryListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
+    pagination_class = StandardResultsSetPagination
 
     def get_permissions(self):
         """

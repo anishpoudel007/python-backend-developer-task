@@ -68,8 +68,26 @@ class OrderSerializer(serializers.ModelSerializer):
         """
         Check stock before saving.
         """
+        if self.instance is None:
+            product_id = attrs.get("product_id")
+            quantity = attrs.get("quantity")
+
+            if not product_id:
+                raise serializers.ValidationError({"product_id": "This field is required."})
+
+            if quantity is None or quantity <= 0:
+                raise serializers.ValidationError({"quantity": "Must be greater than 0"})
+
+            product = Product.objects.select_for_update().get(id=product_id)
+
+            if product.stock_quantity < quantity:
+                raise serializers.ValidationError("Not enough stock")
+
+        return attrs
         product_id = attrs.get("product_id")
         quantity = attrs.get("quantity", 0)
+
+        print("Product ID", product_id)
 
         product = Product.objects.get(id=product_id)
 
@@ -80,11 +98,6 @@ class OrderSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Not enough stock for this product")
 
         return attrs
-
-    def validate_product_id(self, value):
-        if not Product.objects.filter(id=value, delete_status=0, active=1).exists():
-            raise serializers.ValidationError("Invalid or inactive product")
-        return value
 
     def create(self, validated_data):
         product_id = validated_data.pop("product_id")
@@ -104,6 +117,7 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
+        validated_data.pop("product_id", None)
         new_status = validated_data.get("status")
 
         if new_status is not None and new_status != instance.status:
