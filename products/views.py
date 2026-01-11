@@ -3,6 +3,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+from .filters import ProductFilter
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Product
 from .serializers import ProductSerializer
@@ -10,32 +12,19 @@ from .serializers import ProductSerializer
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
+    queryset = Product.objects.filter(delete_status=0)
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ProductFilter
+    ordering = ["name"]
 
-    def get_queryset(self):
-        qs = Product.objects.filter(delete_status=0)
+    def perform_create(self, serializer):
+        # Validate category exists and is active/not deleted
+        category = serializer.validated_data.get("category")
+        if category.delete_status != 0 or category.active != 1:
+            from rest_framework.exceptions import ValidationError
 
-        category_id = self.request.query_params.get("category")
-        active = self.request.query_params.get("active")
-        in_stock = self.request.query_params.get("in_stock")
-        q = self.request.query_params.get("q")
-
-        if q:
-            qs = qs.filter(
-                Q(name__icontains=q) | Q(description__icontains=q) | Q(code__icontains=q)
-            )
-
-        if category_id:
-            qs = qs.filter(category_id=category_id)
-
-        if active is not None:
-            qs = qs.filter(active=active)
-
-        if in_stock and in_stock.lower() == "true":
-            qs = qs.filter(stock_quantity__gt=0)
-        elif in_stock and in_stock.lower() == "false":
-            qs = qs.filter(stock_quantity=0)
-
-        return qs.select_related("category")
+            raise ValidationError({"category": "Category is inactive or deleted"})
+        serializer.save()
 
 
 class ProductRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateAPIView):

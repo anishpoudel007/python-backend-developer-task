@@ -9,6 +9,7 @@ dependencies = [
   "djangorestframework>=3.16.1",
   "python-decouple>=3.8",
   "gunicorn>=21.2.0",
+  "django-filter>=25.2",
 ]
 
 [dependency-groups]
