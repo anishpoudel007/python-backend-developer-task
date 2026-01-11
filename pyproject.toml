@@ -5,14 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "django>=5.2.10",
-    "djangorestframework>=3.16.1",
-    "python-decouple>=3.8",
+  "django>=5.2.10",
+  "djangorestframework>=3.16.1",
+  "python-decouple>=3.8",
+  "gunicorn>=21.2.0",
 ]
 
 [dependency-groups]
-dev = [
-    "faker>=40.1.0",
-    "pytest>=9.0.2",
-    "pytest-django>=4.11.1",
-]
+dev = ["faker>=40.1.0", "pytest>=9.0.2", "pytest-django>=4.11.1"]
