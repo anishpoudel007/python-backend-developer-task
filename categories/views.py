@@ -1,13 +1,21 @@
-from rest_framework import generics, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
 from .models import Category
 from .serializers import CategorySerializer
+from rest_framework import generics, permissions, status
 
 
 class CategoryListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
+
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "POST":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         return Category.objects.filter(
@@ -21,6 +29,14 @@ class CategoryListCreateAPIView(generics.ListCreateAPIView):
 class CategoryRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = CategorySerializer
     lookup_field = "id"
+
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "PATCH":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         return Category.objects.filter(delete_status=0)

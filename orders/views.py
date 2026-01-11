@@ -42,6 +42,14 @@ class OrderRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = OrderSerializer
     lookup_field = "id"
 
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "PATCH":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
     def get_queryset(self):
         return Order.objects.select_related("product").prefetch_related("timeline")
 
