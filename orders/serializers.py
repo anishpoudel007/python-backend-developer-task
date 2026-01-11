@@ -29,7 +29,7 @@ class OrderSerializer(serializers.ModelSerializer):
     product = OrderProductSerializer(read_only=True)
     product_id = serializers.UUIDField(write_only=True)
 
-    status_history = OrderStatusHistorySerializer(many=True, read_only=True)
+    timeline = OrderStatusHistorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
@@ -45,7 +45,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "status_changed_at",
             "created_at",
             "updated_at",
-            "status_history",
+            "timeline",
         ]
         read_only_fields = [
             "order_code",

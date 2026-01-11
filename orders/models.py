@@ -33,8 +33,7 @@ class Order(models.Model):
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
 
-    status = models.IntegerField(
-        choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
 
     status_changed_at = models.DateTimeField(null=True)
 
@@ -64,7 +63,7 @@ class OrderStatusHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     order = models.ForeignKey(
-        Order, on_delete=models.CASCADE, related_name="status_history", db_index=True
+        Order, on_delete=models.CASCADE, related_name="timeline", db_index=True
     )
 
     old_status = models.IntegerField(null=True)

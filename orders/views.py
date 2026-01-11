@@ -34,7 +34,7 @@ class OrderRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
     lookup_field = "id"
 
     def get_queryset(self):
-        return Order.objects.select_related("product").prefetch_related("status_history")
+        return Order.objects.select_related("product").prefetch_related("timeline")
 
 
 class OrderStatusHistoryAPIView(generics.ListAPIView):
@@ -42,4 +42,4 @@ class OrderStatusHistoryAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         order = get_object_or_404(Order, id=self.kwargs["id"])
-        return order.status_history.all()
+        return order.timeline.all()

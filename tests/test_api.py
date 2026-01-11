@@ -62,15 +62,13 @@ def test_update_order_status_creates_history(api_client):
         base_price=1000,
         stock_quantity=10,
     )
-    order = Order.objects.create(
-        product=prod, quantity=1, unit_price=prod.final_price)
-    res = api_client.patch(
-        f"/api/orders/{order.id}/", {"status": 10}, format="json")
+    order = Order.objects.create(product=prod, quantity=1, unit_price=prod.final_price)
+    res = api_client.patch(f"/api/orders/{order.id}/", {"status": 10}, format="json")
     assert res.status_code == 200
     order.refresh_from_db()
     assert order.status == 10
-    print("History", order.status_history.values("old_status", "new_status"))
-    assert order.status_history.count() == 2  # created + status change
+    print("History", order.timeline.values("old_status", "new_status"))
+    assert order.timeline.count() == 2  # created + status change
 
 
 @pytest.mark.django_db

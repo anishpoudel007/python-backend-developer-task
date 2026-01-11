@@ -15,11 +15,10 @@ def test_status_history_created_on_status_change():
         base_price=1000,
         stock_quantity=10,
     )
-    order = Order.objects.create(
-        product=prod, quantity=1, unit_price=prod.final_price)
+    order = Order.objects.create(product=prod, quantity=1, unit_price=prod.final_price)
     order.status = 10
     order.save()
-    assert order.status_history.filter(new_status=10).exists()
+    assert order.timeline.filter(new_status=10).exists()
 
 
 @pytest.mark.django_db
@@ -33,8 +32,7 @@ def test_stock_updates_on_order_create_and_cancel():
         base_price=1000,
         stock_quantity=10,
     )
-    order = Order.objects.create(
-        product=prod, quantity=2, unit_price=prod.final_price)
+    order = Order.objects.create(product=prod, quantity=2, unit_price=prod.final_price)
     prod.refresh_from_db()
     assert prod.stock_quantity == 8
     order.status = 50  # cancelled
@@ -54,8 +52,7 @@ def test_status_changed_at_updates_on_status_change():
         base_price=1000,
         stock_quantity=10,
     )
-    order = Order.objects.create(
-        product=prod, quantity=1, unit_price=prod.final_price)
+    order = Order.objects.create(product=prod, quantity=1, unit_price=prod.final_price)
 
     assert order.status_changed_at is None
 
