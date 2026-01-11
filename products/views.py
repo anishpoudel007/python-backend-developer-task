@@ -1,8 +1,6 @@
-from os import name
-from rest_framework import generics, status
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
 from .filters import ProductFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -12,24 +10,30 @@ from .serializers import ProductSerializer
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
-    queryset = Product.objects.filter(delete_status=0)
+    queryset = Product.objects.filter(delete_status=0)  # class attribute
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
-    ordering = ["name"]
 
-    def perform_create(self, serializer):
-        # Validate category exists and is active/not deleted
-        category = serializer.validated_data.get("category")
-        if category.delete_status != 0 or category.active != 1:
-            from rest_framework.exceptions import ValidationError
-
-            raise ValidationError({"category": "Category is inactive or deleted"})
-        serializer.save()
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "POST":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
 
 class ProductRetrieveUpdateDeleteAPIView(generics.RetrieveUpdateAPIView):
     serializer_class = ProductSerializer
     lookup_field = "id"
+
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "PATCH":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         return Product.objects.filter(delete_status=0).select_related("category")

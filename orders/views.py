@@ -1,5 +1,6 @@
-from rest_framework import generics
 from rest_framework.response import Response
+
+from rest_framework import generics, permissions, status
 from django.shortcuts import get_object_or_404
 from django.utils.dateparse import parse_date
 
@@ -9,6 +10,14 @@ from .serializers import OrderSerializer, OrderStatusHistorySerializer
 
 class OrderListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = OrderSerializer
+
+    def get_permissions(self):
+        """
+        Allow anyone to list, only authenticated to create.
+        """
+        if self.request.method == "POST":
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
 
     def get_queryset(self):
         qs = Order.objects.all().select_related("product")

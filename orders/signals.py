@@ -71,8 +71,6 @@ def update_stock_on_order(sender, instance, created, **kwargs):
 
     # Order created → decrease stock
     if created:
-        if product.stock_quantity < instance.quantity:
-            raise ValueError("Not enough stock for product")
         product.stock_quantity -= instance.quantity
         product.save(update_fields=["stock_quantity"])
         return

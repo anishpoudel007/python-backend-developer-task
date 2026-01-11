@@ -7,7 +7,7 @@ from .models import Order, OrderStatusHistory
 class OrderProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ["id", "name", "code"]
+        fields = ["id", "name", "code", "stock_quantity"]
 
 
 class OrderStatusHistorySerializer(serializers.ModelSerializer):
@@ -53,6 +53,33 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_price",
             "status_changed_at",
         ]
+
+    def validate_product_id(self, value):
+        """
+        Ensure product exists and is active/not deleted.
+        """
+        try:
+            product = Product.objects.get(id=value, delete_status=0, active=1)
+        except Product.DoesNotExist:
+            raise serializers.ValidationError("Invalid or inactive product")
+        return value
+
+    def validate(self, attrs):
+        """
+        Check stock before saving.
+        """
+        product_id = attrs.get("product_id")
+        quantity = attrs.get("quantity", 0)
+
+        product = Product.objects.get(id=product_id)
+
+        if quantity <= 0:
+            raise serializers.ValidationError("Quantity must be greater than 0")
+
+        if product.stock_quantity < quantity:
+            raise serializers.ValidationError("Not enough stock for this product")
+
+        return attrs
 
     def validate_product_id(self, value):
         if not Product.objects.filter(id=value, delete_status=0, active=1).exists():
