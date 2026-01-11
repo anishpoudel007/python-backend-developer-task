@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.utils import timezone
 from products.models import Product
 from .models import Order, OrderStatusHistory
 
@@ -81,21 +80,7 @@ class OrderSerializer(serializers.ModelSerializer):
             product = Product.objects.select_for_update().get(id=product_id)
 
             if product.stock_quantity < quantity:
-                raise serializers.ValidationError("Not enough stock")
-
-        return attrs
-        product_id = attrs.get("product_id")
-        quantity = attrs.get("quantity", 0)
-
-        print("Product ID", product_id)
-
-        product = Product.objects.get(id=product_id)
-
-        if quantity <= 0:
-            raise serializers.ValidationError("Quantity must be greater than 0")
-
-        if product.stock_quantity < quantity:
-            raise serializers.ValidationError("Not enough stock for this product")
+                raise serializers.ValidationError("Not enough stock for this product")
 
         return attrs
 
@@ -117,18 +102,5 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
     def update(self, instance, validated_data):
-        validated_data.pop("product_id", None)
-        new_status = validated_data.get("status")
-
-        if new_status is not None and new_status != instance.status:
-            OrderStatusHistory.objects.create(
-                order=instance,
-                old_status=instance.status,
-                new_status=new_status,
-                changed_by=self.context.get("user"),
-                change_source="api",
-                ip_address=self.context.get("ip"),
-            )
-            instance.status_changed_at = timezone.now()
-
+        validated_data.pop("product_id", None)  # ignore product_id on update
         return super().update(instance, validated_data)
