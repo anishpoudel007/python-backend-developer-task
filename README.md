@@ -55,6 +55,8 @@ cp env.example .env
 ### 2. Install Dependencies
 
 ``` bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install uv
 uv sync
 ```
