@@ -11,7 +11,8 @@ class Product(models.Model):
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField()
 
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="products")
+    category = models.ForeignKey(
+        Category, on_delete=models.PROTECT, related_name="products")
 
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -32,6 +33,10 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.full_clean()  # 🔥 enforce validation
+        super().save(*args, **kwargs)
 
     # ---- Computed fields ----
 

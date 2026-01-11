@@ -1,72 +1,81 @@
+# orders/signals.py
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from .models import Order, OrderStatusHistory
 from products.models import Product
-from .middleware import get_current_request
+from .middleware import get_current_request, get_client_ip
 
 
 @receiver(pre_save, sender=Order)
-def track_order_status_change(sender, instance, **kwargs):
+def order_pre_save(sender, instance, **kwargs):
     """
-    Store old status in instance attribute before save
+    Pre-save signal for Order:
+    - Track old status (_old_status)
+    - Detect if status changed (_status_changed)
+    - Update status_changed_at if status changes
     """
-    if instance.pk:
-        old_instance = Order.objects.filter(pk=instance.pk).first()
-        instance._old_status = old_instance.status if old_instance else None
-    else:
+    # New object → no old status
+    if not instance.pk:
         instance._old_status = None
+        instance._status_changed = True
+        return
 
+    # Existing object → fetch old status safely
+    try:
+        old = Order.objects.only("status").get(pk=instance.pk)
+        instance._old_status = old.status
+        instance._status_changed = old.status != instance.status
 
-@receiver(pre_save, sender=Order)
-def update_status_timestamp(sender, instance, **kwargs):
-    """
-    Auto-set status_changed_at if status changes
-    """
-    old_status = getattr(instance, "_old_status", None)
-    if old_status is not None and old_status != instance.status:
-        instance.status_changed_at = timezone.now()
+        if instance._status_changed:
+            instance.status_changed_at = timezone.now()
+    except Order.DoesNotExist:
+        # Should rarely happen
+        instance._old_status = None
+        instance._status_changed = True
 
 
 @receiver(post_save, sender=Order)
 def create_order_status_history(sender, instance, created, **kwargs):
     """
-    Create status history entry if status changed
+    Post-save signal:
+    - Create OrderStatusHistory entry if status changed
+    - Only one entry per logical change
     """
-    old_status = getattr(instance, "_old_status", None)
-    if created or (old_status is not None and old_status != instance.status):
-        request = get_current_request()
-        changed_by = getattr(request, "user", None)
-        ip_address = getattr(request, "META", {}).get("REMOTE_ADDR") if request else None
-        change_source = "api" if request else "system"
+    if not getattr(instance, "_status_changed", False):
+        return
 
-        OrderStatusHistory.objects.create(
-            order=instance,
-            old_status=old_status,
-            new_status=instance.status,
-            changed_by=str(changed_by) if changed_by else None,
-            change_source=change_source,
-            ip_address=ip_address,
-        )
+    request = get_current_request()
+    OrderStatusHistory.objects.create(
+        order=instance,
+        old_status=instance._old_status,
+        new_status=instance.status,
+        changed_by=str(getattr(request, "user", None)) if request else None,
+        change_source="api" if request else "system",
+        ip_address=get_client_ip(request),
+    )
+
+    # Prevent duplicate history on repeated saves
+    instance._status_changed = False
 
 
 @receiver(post_save, sender=Order)
 def update_stock_on_order(sender, instance, created, **kwargs):
     """
-    Decrease product stock on order creation
-    Restore stock if order is cancelled (status=50)
+    Post-save signal:
+    - Decrease product stock on order creation
+    - Restore stock if order is cancelled
     """
     product = instance.product
     old_status = getattr(instance, "_old_status", None)
 
     # Order created → decrease stock
     if created:
-        if product.stock_quantity >= instance.quantity:
-            product.stock_quantity -= instance.quantity
-            product.save(update_fields=["stock_quantity"])
-        else:
-            # Optional: raise exception or log insufficient stock
+        if product.stock_quantity < instance.quantity:
             raise ValueError("Not enough stock for product")
+        product.stock_quantity -= instance.quantity
+        product.save(update_fields=["stock_quantity"])
+        return
 
     # Order cancelled → restore stock
     if old_status != Order.STATUS_CANCELLED and instance.status == Order.STATUS_CANCELLED:

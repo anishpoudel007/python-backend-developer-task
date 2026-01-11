@@ -10,6 +10,25 @@ def get_current_request():
     return getattr(_thread_locals, "request", None)
 
 
+def get_client_ip(request):
+    """
+    Extract client IP address from request.
+
+    Priority:
+    1. X-Forwarded-For (first IP)
+    2. REMOTE_ADDR
+    """
+    if request is None:
+        return None
+
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        # X-Forwarded-For may contain multiple IPs: client, proxy1, proxy2
+        return x_forwarded_for.split(",")[0].strip()
+
+    return request.META.get("REMOTE_ADDR")
+
+
 class RequestMiddleware:
     """
     Middleware to store the current request in thread-local storage
