@@ -6,7 +6,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path("orders/", OrderListCreateAPIView.as_view()),
-    path("orders/<uuid:id>/", OrderRetrieveUpdateAPIView.as_view()),
-    path("orders/<uuid:id>/history/", OrderStatusHistoryAPIView.as_view()),
+    path("/", OrderListCreateAPIView.as_view()),
+    path("/<uuid:id>/", OrderRetrieveUpdateAPIView.as_view()),
+    path("/<uuid:id>/history/", OrderStatusHistoryAPIView.as_view()),
 ]

@@ -5,6 +5,6 @@ from .views import (
 )
 
 urlpatterns = [
-    path("categories/", CategoryListCreateAPIView.as_view()),
-    path("categories/<uuid:id>/", CategoryRetrieveUpdateDeleteAPIView.as_view()),
+    path("/", CategoryListCreateAPIView.as_view()),
+    path("/<uuid:id>/", CategoryRetrieveUpdateDeleteAPIView.as_view()),
 ]
