@@ -38,7 +38,7 @@ order lifecycle management, stock handling, and OpenAPI documentation.
 
 ## Local Setup (Using uv)
 
-### 1. Clone the Repository
+### Clone the Repository
 
 ``` bash
 git clone <repository-url>
@@ -51,8 +51,10 @@ Copy the example environment file and update values as needed:
 
 ```bash
 cp env.example .env
+```
+```
 
-### 2. Install Dependencies
+### Install Dependencies
 
 ``` bash
 python3 -m venv .venv
@@ -61,13 +63,13 @@ pip install uv
 uv sync
 ```
 
-### 3. Apply Migrations
+### Apply Migrations
 
 ``` bash
 python manage.py migrate
 ```
 
-### 4. Create Superuser
+### Create Superuser
 
 ``` bash
 python manage.py createsuperuser
